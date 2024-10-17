@@ -12,6 +12,15 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#root {
+  height: 100%;
+}
 
 a {
   font-weight: 500;
@@ -65,4 +74,24 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.navBar {
+  display: flex;
+  border: red solid 1px;
+  position: sticky; /* Keeps it "sticky" at the top when scrolling */
+  top: 0; /* Sticks the navBar to the top */
+  left: 0; /* Sticks the navBar to the left */
+  align-items: center; /* Aligns the items vertically */
+  justify-content: center; /* Centers the items horizontally */
+  gap: 2em; /* Adds gap between items */
+  width: 100%;
+}
+
+.main {
+  display: flex;
+}
+.selectedIngredients {
+  display: flex;
+  flex-direction: column;
 }
