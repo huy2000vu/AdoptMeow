@@ -3,6 +3,8 @@ import "./App.css";
 import "/src/index.css";
 import NavBar from "./Components/NavBar";
 import SelectedIngredients from "./Components/SelectedIngredients";
+import RecipeCard from "./Components/RecipeCard";
+
 // const apikey = import.meta.VITE_APP_API_KEY;
 const api_key = import.meta.env.VITE_APP_API_KEY;
 const ingredients = `5 spice powder;1002002
@@ -1014,6 +1016,10 @@ export default function App() {
   const [userIngredient, setUserIngredient] = useState([]);
   const [searchTerm, setSearchTerm] = useState(""); // To capture user input
   const [filteredIngredients, setFilteredIngredients] = useState([]); // To hold filtered ingredients
+  function removeIngredient(event) {
+    const ingredients = event.target.textContent;
+    setUserIngredient(userIngredient.filter((i) => i !== ingredients));
+  }
   const handleInputChange = (e) => {
     const input = e.target.value;
     setSearchTerm(input);
@@ -1036,44 +1042,83 @@ export default function App() {
       setUserIngredient([...userIngredient, ingredient]); // Add selected ingredient to user's list
     }
   }
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     const response = await fetch(
-  //       `https://api.spoonacular.com/recipes/complexSearch?apiKey=${api_key}&addRecipeInformation=true`
-  //     );
+  useEffect(() => {
+    async function fetchData() {
+      if (userIngredient.length > 0) {
+        // Step 1: Fetch recipes based on ingredients
+        const response = await fetch(
+          `https://api.spoonacular.com/recipes/findByIngredients?ingredients=${userIngredient.join(
+            ","
+          )}&number=5&apiKey=${api_key}`
+        );
+        const recipes = await response.json();
 
-  //     const json = await response.json();
-  //     setData(json);
-  //   }
-  //   fetchData();
-  //   console.log(data);
-  // }, []);
-  console.log(cleanedIngredient); //debug
-  console.log(userIngredient);
+        // Step 2: Fetch detailed information for each recipe, including instructions
+        const detailedRecipes = await Promise.all(
+          recipes.map(async (recipe) => {
+            const recipeDetailsResponse = await fetch(
+              `https://api.spoonacular.com/recipes/${recipe.id}/information?includeNutrition=false&apiKey=${api_key}`
+            );
+            return await recipeDetailsResponse.json();
+          })
+        );
+
+        setData(detailedRecipes);
+      }
+    }
+
+    fetchData();
+    console.log("Detailed recipes:", data); // This will display the array of objects.
+
+    // console.log(`Recipes: ${recipes}`);
+  }, [userIngredient]);
+
+  // console.log(cleanedIngredient); //debug
+  // console.log(userIngredient);
   return (
     <div className="main">
-      <SelectedIngredients ingredientsList={userIngredient} />
-      <input
-        type="text"
-        placeholder="Enter an ingredient..."
-        value={searchTerm}
-        onChange={handleInputChange}
-        style={{ padding: "8px", width: "300px" }}
-      />
-      {/* {" "} */}
-      {filteredIngredients.length > 0 && (
-        <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-          {filteredIngredients.map((ingredient, index) => (
-            <li
-              onClick={ingredient_click}
-              key={index}
-              style={{ padding: "5px", cursor: "pointer" }}
-            >
-              {ingredient}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="sidebar">
+        <div className="searchBar">
+          <input
+            type="text"
+            placeholder="Enter an ingredient..."
+            value={searchTerm}
+            onChange={handleInputChange}
+            style={{ padding: "8px", width: "300px" }}
+          />
+          {filteredIngredients.length > 0 && (
+            <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+              {filteredIngredients.map((ingredient, index) => (
+                <li
+                  onClick={ingredient_click}
+                  key={index}
+                  style={{ padding: "5px", cursor: "pointer" }}
+                >
+                  {ingredient}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <SelectedIngredients
+          ingredientsList={userIngredient}
+          removeFunction={removeIngredient}
+        />
+      </div>
+
+      <div className="recipeList">
+        <h1>RECIPES LIST</h1>
+        <div className="recipes">
+          {data &&
+            data.map((recipe, index) => (
+              <RecipeCard
+                key={index}
+                title={recipe.title}
+                image={recipe.image}
+              />
+            ))}
+        </div>
+      </div>
     </div>
   );
 }
